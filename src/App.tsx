@@ -1,33 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import Sidebar from './components/Sidebar';
+import { data } from './db/data';
+import ProductCard from './components/ProductCard';
+import { useFilterStore } from './store/store';
 
-function App() {
-  const [count, setCount] = useState(0)
+interface Product {
+  id: string;
+  country: string;
+  img: { [key: string]: string | undefined };
+  price: number;
+  title: string;
+}
+
+const App = () => {
+
+  const { selectedCountries, selectedColors, selectedPriceRange } =
+    useFilterStore();
+
+  const filteredData = data.filter((item: Product) => {
+    const matchesColor =
+      selectedColors.length === 0 ||
+      Object.keys(item.img).some((color) => selectedColors.includes(color));
+
+    const matchesCountry =
+      selectedCountries.length === 0 ||
+      selectedCountries.includes(item.country);
+
+    const matchesPrice = selectedPriceRange
+      ? item.price >= selectedPriceRange.min &&
+      item.price <= selectedPriceRange.max
+      : true;
+
+    return matchesColor && matchesCountry && matchesPrice;
+  });
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <Sidebar />
+
+      <div className='p-4 flex flex-wrap justify-center items-center'>
+        {filteredData.length > 0 && filteredData.map((product) =>
+          <ProductCard key={product.id} product={product} />
+        )}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
